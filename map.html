@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>GPS Map - Kakao</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    html, body { margin:0; padding:0; height:100%; }
+    #map { width:100%; height:100%; }
+    #debug {
+      position: fixed; left: 8px; top: 8px;
+      background: rgba(255,255,255,0.92);
+      padding: 6px 8px; border-radius: 6px;
+      font-size: 12px; z-index: 9999;
+      max-width: 92vw; white-space: pre-wrap;
+    }
+  </style>
+
+  <script>
+    // 화면에 에러 표시(흰 화면 방지용)
+    function dbg(msg){
+      const el = document.getElementById('debug');
+      el.style.display = 'block';
+      el.textContent = String(msg);
+    }
+    window.onerror = function(msg, url, line, col){
+      dbg(`JS ERROR: ${msg}\n${url}:${line}:${col}`);
+    };
+  </script>
+
+  <!-- Kakao Map JS SDK -->
+  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=fa444f68a12c88d61f851d45946119ad"></script>
+</head>
+
+<body>
+  <div id="map"></div>
+  <div id="debug" style="display:none;"></div>
+
+  <script>
+    // SDK 로드 확인
+    if (typeof kakao === "undefined" || !kakao.maps || typeof kakao.maps.LatLng !== "function") {
+      dbg("Kakao SDK load failed or blocked.\n"
+        + "If you are using file:///android_asset, domain/referrer restrictions may block JS SDK.");
+      // ★ 여기서 중단해야 함
+    } else {
+      const map = new kakao.maps.Map(document.getElementById('map'), {
+        center: new kakao.maps.LatLng(37.438389, 127.174611),
+        level: 3
+      });
+
+      let markers = [];
+      let polyline = null;
+
+      window.addPoint = function(lat, lon){
+        const pos = new kakao.maps.LatLng(lat, lon);
+        const marker = new kakao.maps.Marker({ position: pos });
+        marker.setMap(map);
+        markers.push(marker);
+        map.setCenter(pos);
+      };
+
+      window.clearPoints = function(){
+        for (const m of markers) m.setMap(null);
+        markers = [];
+        if (polyline) { polyline.setMap(null); polyline = null; }
+      };
+
+      window.drawPolyline = function(points){
+        try{
+          const path = points.map(p => new kakao.maps.LatLng(p[0], p[1]));
+          if (polyline) polyline.setMap(null);
+          polyline = new kakao.maps.Polyline({
+            path: path,
+            strokeWeight: 4,
+            strokeOpacity: 0.8
+          });
+          polyline.setMap(map);
+
+          const bounds = new kakao.maps.LatLngBounds();
+          path.forEach(latlng => bounds.extend(latlng));
+          map.setBounds(bounds);
+        }catch(e){
+          dbg("drawPolyline error: " + e);
+        }
+      };
+    }
+  </script>
+</body>
+</html>
