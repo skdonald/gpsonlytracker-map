@@ -30,20 +30,18 @@
   </script>
 
   <!-- Kakao Map JS SDK -->
-  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=fa444f68a12c88d61f851d45946119ad"></script>
-</head>
-
-<body>
-  <div id="map"></div>
-  <div id="debug" style="display:none;"></div>
-
+  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=fa444f68a12c88d61f851d45946119ad&autoload=false"></script>
   <script>
-    // SDK 로드 확인
-    if (typeof kakao === "undefined" || !kakao.maps || typeof kakao.maps.LatLng !== "function") {
-      dbg("Kakao SDK load failed or blocked.\n"
-        + "If you are using file:///android_asset, domain/referrer restrictions may block JS SDK.");
-      // ★ 여기서 중단해야 함
-    } else {
+    function dbg(msg){
+      const el = document.getElementById('debug');
+      el.style.display='block';
+      el.textContent=String(msg);
+    }
+
+    // SDK 로딩 완료 후 init 실행
+    kakao.maps.load(function() {
+      dbg("Kakao SDK loaded OK");
+
       const map = new kakao.maps.Map(document.getElementById('map'), {
         center: new kakao.maps.LatLng(37.438389, 127.174611),
         level: 3
@@ -67,24 +65,16 @@
       };
 
       window.drawPolyline = function(points){
-        try{
-          const path = points.map(p => new kakao.maps.LatLng(p[0], p[1]));
-          if (polyline) polyline.setMap(null);
-          polyline = new kakao.maps.Polyline({
-            path: path,
-            strokeWeight: 4,
-            strokeOpacity: 0.8
-          });
-          polyline.setMap(map);
+        const path = points.map(p => new kakao.maps.LatLng(p[0], p[1]));
+        if (polyline) polyline.setMap(null);
+        polyline = new kakao.maps.Polyline({ path, strokeWeight: 4, strokeOpacity: 0.8 });
+        polyline.setMap(map);
 
-          const bounds = new kakao.maps.LatLngBounds();
-          path.forEach(latlng => bounds.extend(latlng));
-          map.setBounds(bounds);
-        }catch(e){
-          dbg("drawPolyline error: " + e);
-        }
+        const bounds = new kakao.maps.LatLngBounds();
+        path.forEach(latlng => bounds.extend(latlng));
+        map.setBounds(bounds);
       };
-    }
+    });
   </script>
 </body>
 </html>
